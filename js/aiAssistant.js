@@ -1,3 +1,6 @@
+import { APP_CONFIG, AI_RESPONSES, STORAGE_KEYS, DATE_FORMAT } from './constants.js';
+import { formatCurrency, formatDate, generateId, getRandomItem, sleep, safeJsonParse, safeJsonStringify } from './utils.js';
+
 /**
  * AI Financial Assistant Module
  * Handles AI chat functionality, API integration, and financial context
@@ -7,16 +10,25 @@
 class AIAssistant {
   constructor() {
     this.config = {
+      ...APP_CONFIG.api, // Use API config from constants
       geminiApiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
-      maxMessagesHistory: 20,
-      apiKey: null
+      maxMessagesHistory: APP_CONFIG.ui.chatHistoryLimit, // Use chat history limit from constants
+      apiKey: null // This should ideally be loaded securely from an environment variable or backend
     };
 
     this.elements = {};
-    this.messageHistory = [];
+    this.messageHistory = safeJsonParse(localStorage.getItem(STORAGE_KEYS.CHAT_HISTORY), []);
     this.isInitialized = false;
     this.isTyping = false;
     this.financialData = null;
+
+    // Initialize API key if available in a global variable or through other means
+    if (window.FINANCEPRO_API_KEY) {
+      this.config.apiKey = window.FINANCEPRO_API_KEY;
+    } else {
+      // Try loading from local storage
+      this.config.apiKey = localStorage.getItem('gemini-api-key');
+    }
 
     this.init();
   }
@@ -30,7 +42,7 @@ class AIAssistant {
     this.cacheElements();
     this.loadApiKey();
     this.attachEventListeners();
-    this.loadChatHistory();
+    this.renderChatHistory(); // Render history on init
     this.updateStatus();
 
     this.isInitialized = true;
@@ -61,10 +73,16 @@ class AIAssistant {
     const savedApiKey = localStorage.getItem('gemini-api-key');
     if (savedApiKey) {
       this.config.apiKey = savedApiKey;
+      if (this.elements.apiKeyInput) {
+        this.elements.apiKeyInput.value = savedApiKey;
+      }
       if (this.elements.apiKeySetup) {
         this.elements.apiKeySetup.style.display = 'none';
       }
+    } else if (this.elements.apiKeySetup) {
+      this.elements.apiKeySetup.style.display = 'flex'; // Show setup if no key
     }
+    this.updateSendButton();
   }
 
   /**
@@ -141,7 +159,7 @@ class AIAssistant {
       }
 
       this.updateStatus('Ready');
-      this.showNotification('API key saved successfully!', 'success');
+      this.showNotification(AI_RESPONSES.API_KEY_SAVED, 'success');
       this.updateSendButton();
     }
   }
@@ -152,44 +170,41 @@ class AIAssistant {
   async sendMessage(message) {
     if (!message.trim()) return;
 
-    // Add user message to chat
     this.addMessage(message, 'user');
     this.showTypingIndicator();
 
     try {
-      // Get financial context and market data
       const [financialContext, marketData] = await Promise.all([
         this.getFinancialContext(),
-        MarketDataService ? MarketDataService.getRelevantMarketData(message) : null
+        window.MarketDataService ? window.MarketDataService.getRelevantMarketData(message) : null
       ]);
 
-      // Generate AI response
       const response = await this.generateResponse(message, financialContext, marketData);
 
       this.hideTypingIndicator();
       this.addMessage(response, 'ai');
 
-      // Update message history
-      this.updateMessageHistory(message, response);
+      // No need for updateMessageHistory here as addMessage handles it now
 
     } catch (error) {
       console.error('AI Assistant Error:', error);
       this.hideTypingIndicator();
-      this.addMessage('I apologize, but I encountered an error. Please try again or check your API key.', 'ai');
+      this.addMessage(AI_RESPONSES.GENERIC_ERROR, 'ai');
     }
   }
 
   /**
    * Add message to chat
    */
-  addMessage(content, sender) {
-    if (!this.elements.chatMessages) return;
+  addMessage(content, sender, save = true) {
+    const chatMessages = this.elements.chatMessages;
+    if (!chatMessages) return;
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `${sender}-message`;
-
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+    
+    const time = formatDate(new Date(), DATE_FORMAT.time); // Use DATE_FORMAT constant
+    
     messageDiv.innerHTML = `
       <div class="message-avatar">
         ${sender === 'ai' ? this.getAIIcon() : this.getUserIcon()}
@@ -203,12 +218,14 @@ class AIAssistant {
       </div>
     `;
 
-    this.elements.chatMessages.appendChild(messageDiv);
-    this.scrollToBottom();
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 
     // Save to chat history
-    this.messageHistory.push({ content, sender, timestamp: new Date() });
-    this.saveChatHistory();
+    if (save) {
+      this.messageHistory.push({ content, sender, timestamp: new Date().toISOString() });
+      localStorage.setItem(STORAGE_KEYS.CHAT_HISTORY, safeJsonStringify(this.messageHistory));
+    }
   }
 
   /**
@@ -243,7 +260,7 @@ class AIAssistant {
     `;
 
     this.elements.chatMessages.appendChild(typingDiv);
-    this.scrollToBottom();
+    this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight; // Direct scroll
     this.isTyping = true;
   }
 
@@ -265,63 +282,58 @@ class AIAssistant {
     if (!this.elements.chatInput || !this.elements.sendButton) return;
 
     const hasText = this.elements.chatInput.value.trim().length > 0;
-    this.elements.sendButton.disabled = !hasText || this.isTyping;
+    this.elements.sendButton.disabled = !hasText || this.isTyping || !this.config.apiKey;
   }
 
   /**
-   * Get financial context from app data
+   * Get financial context from the application
    */
-  async getFinancialContext() {
-    const context = {
-      income: null,
-      budget: null,
-      emergency: null,
-      goals: null
+  getFinancialContext() {
+    // Try to get data from the data manager if available
+    let context = {
+      income: {
+        annual: 0,
+        netMonthly: 0,
+      },
+      expenses: 0,
+      savings: 0,
+      debt: 0,
+      goals: []
     };
 
-    try {
-      // Get income data
-      if (typeof FinancialDataStore !== 'undefined' && FinancialDataStore.income) {
-        const income = FinancialDataStore.income;
-        context.income = {
-          annual: income.annualIncome,
-          monthly: income.monthlyIncome,
-          netAnnual: income.netIncome,
-          netMonthly: income.netMonthly
-        };
-      }
-
-      // Get budget data
-      if (typeof FinancialDataStore !== 'undefined' && FinancialDataStore.budget) {
-        context.budget = FinancialDataStore.budget;
-      }
-
-      // Get emergency fund data
-      if (typeof FinancialDataStore !== 'undefined' && FinancialDataStore.emergencyFund) {
-        context.emergency = FinancialDataStore.emergencyFund;
-      }
-    } catch (error) {
-      console.log('Financial context not available:', error);
+    if (window.dataManager) {
+      const data = window.dataManager.getData();
+      context = {
+        income: {
+          annual: data.income?.annualIncome || 0,
+          netMonthly: data.income?.netMonthly || 0,
+        },
+        expenses: data.expenses || 0,
+        savings: data.savings || 0,
+        debt: data.debt || 0,
+        goals: data.goals || []
+      };
     }
 
     return context;
   }
 
   /**
-   * Generate AI response
+   * Generate AI response (orchestrates API call and formatting)
    */
   async generateResponse(userMessage, financialContext, marketData) {
     if (!this.config.apiKey) {
-      return "To get personalized AI advice, please set up your free Gemini API key in the settings. For now, here's some general financial guidance: " + this.getGeneralAdvice(userMessage, financialContext);
+      return AI_RESPONSES.API_KEY_MISSING + " " + getRandomItem(AI_RESPONSES.GENERAL_ADVICE);
     }
 
     try {
       const prompt = this.buildPrompt(userMessage, financialContext, marketData);
-      const response = await this.callGeminiAPI(prompt);
-      return this.formatAIResponse(response, marketData);
+      const rawResponse = await this.callGeminiAPI(prompt);
+      // Gemini's rawResponse should be the primary source of advice
+      return this.formatAIResponse(rawResponse, marketData);
     } catch (error) {
       console.error('AI Response Error:', error);
-      return this.getFallbackResponse(userMessage, financialContext, marketData);
+      return AI_RESPONSES.SERVER_ERROR + " " + getRandomItem(AI_RESPONSES.GENERAL_ADVICE);
     }
   }
 
@@ -329,21 +341,23 @@ class AIAssistant {
    * Build context-aware prompt
    */
   buildPrompt(userMessage, financialContext, marketData) {
-    let systemPrompt = `You are a helpful financial advisor AI assistant. Provide accurate, personalized financial advice.
-
-User's Financial Context:`;
+    let systemPrompt = `You are a helpful financial advisor AI assistant. Provide accurate, personalized financial advice.\n\nUser's Financial Context:`;
 
     if (financialContext.income) {
-      systemPrompt += `\n- Annual Income: $${financialContext.income.annual?.toLocaleString() || 'Not provided'}`;
-      systemPrompt += `\n- Monthly Net Income: $${financialContext.income.netMonthly?.toLocaleString() || 'Not provided'}`;
+      systemPrompt += `\n- Annual Income: ${formatCurrency(financialContext.income.annual)}`;
+      systemPrompt += `\n- Monthly Net Income: ${formatCurrency(financialContext.income.netMonthly)}`;
     }
 
     if (financialContext.budget) {
-      systemPrompt += `\n- Budget Information: Available`;
+      systemPrompt += `\n- Budget Information: Available`; // More detailed budget info could be added here
     }
 
     if (financialContext.emergency) {
-      systemPrompt += `\n- Emergency Fund: $${financialContext.emergency.currentFund?.toLocaleString() || '0'} (Target: $${financialContext.emergency.targetAmount?.toLocaleString() || 'Not set'})`;
+      systemPrompt += `\n- Emergency Fund: ${formatCurrency(financialContext.emergency.savings || 0)} (Target: ${formatCurrency(financialContext.emergency.targetAmount || 0)})`;
+    }
+
+    if (financialContext.goals && financialContext.goals.length > 0) {
+      systemPrompt += `\n- Goals: ${financialContext.goals.map(g => `${g.name} (${formatCurrency(g.current)}/${formatCurrency(g.amount)})`).join(', ')}`; // Assuming goals have name, current, and amount
     }
 
     if (marketData && Object.keys(marketData).length > 0) {
@@ -351,12 +365,12 @@ User's Financial Context:`;
       Object.entries(marketData).forEach(([key, data]) => {
         if (data) {
           const changeSymbol = data.changePercent >= 0 ? '+' : '';
-          systemPrompt += `\n- ${data.symbol}: $${data.price?.toFixed(2)} (${changeSymbol}${data.changePercent?.toFixed(2)}%)`;
+          systemPrompt += `\n- **${data.symbol}**: ${formatCurrency(data.price || 0)} (${changeSymbol}${data.changePercent?.toFixed(2)}%)`;
         }
       });
     }
 
-    systemPrompt += `\n\nProvide helpful, specific advice. Keep responses under 200 words unless detailed explanation is needed. Use bullet points when appropriate.`;
+    systemPrompt += `\n\nProvide helpful, specific advice. Keep responses under ${APP_CONFIG.ai.maxResponseWords || 200} words unless detailed explanation is needed. Use bullet points when appropriate.`;
 
     return `${systemPrompt}\n\nUser Question: ${userMessage}`;
   }
@@ -387,13 +401,14 @@ User's Financial Context:`;
   }
 
   /**
-   * Format AI response with market data
+   * Format AI response with market data (no longer generating advice here, just appending market data if relevant)
    */
   formatAIResponse(response, marketData) {
+    let finalResponse = response;
     if (marketData && Object.keys(marketData).length > 0) {
-      response += this.formatMarketDataDisplay(marketData);
+      finalResponse += this.formatMarketDataDisplay(marketData);
     }
-    return response;
+    return finalResponse;
   }
 
   /**
@@ -405,7 +420,7 @@ User's Financial Context:`;
     Object.entries(marketData).forEach(([key, data]) => {
       if (data) {
         const changeSymbol = data.changePercent >= 0 ? '+' : '';
-        display += `\n• **${data.symbol}**: $${data.price?.toFixed(2)} (${changeSymbol}${data.changePercent?.toFixed(2)}%)`;
+        display += `\n• **${data.symbol}**: ${formatCurrency(data.price || 0)} (${changeSymbol}${data.changePercent?.toFixed(2)}%)`;
       }
     });
 
@@ -413,120 +428,36 @@ User's Financial Context:`;
   }
 
   /**
-   * Get fallback response
-   */
-  getFallbackResponse(userMessage, financialContext, marketData) {
-    let response = "I'm having trouble connecting to the AI service right now. ";
-
-    if (marketData && Object.keys(marketData).length > 0) {
-      response += "However, here's the current market data you requested:";
-      response += this.formatMarketDataDisplay(marketData);
-    } else {
-      response += "Here's some general advice: " + this.getGeneralAdvice(userMessage, financialContext);
-    }
-
-    return response;
-  }
-
-  /**
-   * Get general financial advice
+   * Get general financial advice (now uses constants)
    */
   getGeneralAdvice(message, financialContext) {
     const lowerMessage = message.toLowerCase();
 
     if (lowerMessage.includes('budget') || lowerMessage.includes('spending')) {
-      return "Follow the 50/30/20 rule: 50% for needs, 30% for wants, 20% for savings and debt repayment.";
+      return getRandomItem(AI_RESPONSES.BUDGET_ADVICE);
     }
 
-    if (lowerMessage.includes('invest') || lowerMessage.includes('stock')) {
-      return "Start with low-cost index funds, diversify your portfolio, and invest consistently for the long term.";
+    if (lowerMessage.includes('invest') || lowerMessage.includes('stock') || lowerMessage.includes('portfolio')) {
+      return getRandomItem(AI_RESPONSES.INVESTMENT_ADVICE);
     }
 
-    if (lowerMessage.includes('debt') || lowerMessage.includes('pay off')) {
-      return "Use either debt avalanche (highest interest first) or debt snowball (smallest balance first) strategies.";
+    if (lowerMessage.includes('debt') || lowerMessage.includes('pay off') || lowerMessage.includes('loan')) {
+      return getRandomItem(AI_RESPONSES.DEBT_ADVICE);
     }
 
-    if (lowerMessage.includes('emergency') || lowerMessage.includes('savings')) {
-      return "Aim for 3-6 months of expenses in a high-yield savings account for emergencies.";
+    if (lowerMessage.includes('emergency') || lowerMessage.includes('savings') || lowerMessage.includes('fund')) {
+      return getRandomItem(AI_RESPONSES.EMERGENCY_FUND_ADVICE);
     }
 
-    return "Focus on the basics: spend less than you earn, build an emergency fund, pay off high-interest debt, and invest for the long term.";
-  }
-
-  /**
-   * Update message history
-   */
-  updateMessageHistory(userMessage, aiResponse) {
-    this.messageHistory.push({ user: userMessage, ai: aiResponse, timestamp: Date.now() });
-
-    if (this.messageHistory.length > this.config.maxMessagesHistory) {
-      this.messageHistory = this.messageHistory.slice(-this.config.maxMessagesHistory);
+    if (lowerMessage.includes('goal') || lowerMessage.includes('save') || lowerMessage.includes('target')) {
+      return getRandomItem(AI_RESPONSES.GOALS_ADVICE);
     }
-  }
 
-  /**
-   * Save chat history to localStorage
-   */
-  saveChatHistory() {
-    try {
-      localStorage.setItem('ai-chat-history', JSON.stringify(this.messageHistory));
-    } catch (error) {
-      console.error('Error saving chat history:', error);
+    if (lowerMessage.includes('tax') || lowerMessage.includes('deduction') || lowerMessage.includes('refund')) {
+      return getRandomItem(AI_RESPONSES.TAX_ADVICE);
     }
-  }
 
-  /**
-   * Load chat history from localStorage
-   */
-  loadChatHistory() {
-    try {
-      const saved = localStorage.getItem('ai-chat-history');
-      if (saved) {
-        this.messageHistory = JSON.parse(saved);
-        if (this.messageHistory.length > 50) {
-          this.messageHistory = this.messageHistory.slice(-50);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading chat history:', error);
-      this.messageHistory = [];
-    }
-  }
-
-  /**
-   * Clear chat history
-   */
-  clearChatHistory() {
-    this.messageHistory = [];
-    localStorage.removeItem('ai-chat-history');
-
-    if (this.elements.chatMessages) {
-      this.elements.chatMessages.innerHTML = `
-        <div class="ai-message">
-          <div class="message-avatar">
-            ${this.getAIIcon()}
-          </div>
-          <div class="message-content">
-            <div class="message-header">
-              <span class="message-sender">AI Assistant</span>
-              <span class="message-time">Just now</span>
-            </div>
-            <div class="message-text">
-              Hello! I'm your AI financial assistant. I can help you with:
-              <ul class="mt-2 space-y-1 text-sm">
-                <li>• Budget planning and optimization</li>
-                <li>• Investment strategies and recommendations</li>
-                <li>• Debt payoff strategies</li>
-                <li>• Emergency fund planning</li>
-                <li>• Financial goal setting</li>
-                <li>• Tax planning basics</li>
-              </ul>
-              What would you like to know about your finances?
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    return getRandomItem(AI_RESPONSES.GENERAL_ADVICE);
   }
 
   /**
@@ -538,25 +469,18 @@ User's Financial Context:`;
     if (status) {
       this.elements.aiStatus.textContent = status;
     } else {
-      this.elements.aiStatus.textContent = this.config.apiKey ? 'Ready' : 'Setup Required';
+      this.elements.aiStatus.textContent = this.config.apiKey ? AI_RESPONSES.STATUS_READY : AI_RESPONSES.STATUS_SETUP_REQUIRED;
     }
   }
 
   /**
-   * Scroll chat to bottom
-   */
-  scrollToBottom() {
-    if (this.elements.chatMessages) {
-      this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
-    }
-  }
-
-  /**
-   * Show notification
+   * Show notification (delegated to dataManager if available)
    */
   showNotification(message, type) {
-    if (typeof showNotification === 'function') {
-      showNotification(message, type);
+    if (window.dataManager && typeof window.dataManager.showNotification === 'function') {
+      window.dataManager.showNotification(message, type);
+    } else {
+      console.warn(`Notification: ${message} (Type: ${type}) - Data Manager not available`);
     }
   }
 
