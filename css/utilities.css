@@ -1,0 +1,137 @@
+/* css/utilities.css */
+
+/* Base Styles */
+.container {
+  @apply mx-auto px-4;
+}
+
+.flex-center {
+  @apply flex items-center justify-center;
+}
+
+.btn-base {
+  @apply py-2 px-4 rounded-md font-semibold transition duration-200;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+}
+
+.input-base {
+  @apply w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+}
+
+.card-base {
+  @apply bg-white dark:bg-gray-800 rounded-lg shadow-md p-6;
+}
+
+.text-heading {
+  @apply text-xl font-bold text-gray-900 dark:text-white mb-4;
+}
+
+/* Tab Navigation */
+.tab-btn-base {
+  @apply inline-flex items-center justify-center p-4 border-b-2 border-transparent text-sm font-medium leading-5 text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500;
+}
+
+.tab-btn-active {
+  @apply border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400;
+}
+
+.tab-btn-inactive {
+  @apply border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-500;
+}
+
+/* Alerts and Notifications */
+.alert-base {
+  @apply p-4 rounded-md text-sm font-medium;
+}
+
+.alert-success {
+  @apply bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100;
+}
+
+.alert-error {
+  @apply bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100;
+}
+
+.alert-info {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100;
+}
+
+.alert-warning {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100;
+}
+
+/* Form Elements */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1;
+}
+
+.form-input {
+  @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+}
+
+.form-textarea {
+  @apply form-input resize-y;
+}
+
+.form-select {
+  @apply form-input;
+}
+
+.checkbox {
+  @apply h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500;
+}
+
+.radio {
+  @apply h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500;
+}
+
+/* Utility Classes for AI Chat */
+.chat-message-bubble {
+  @apply p-3 rounded-lg max-w-[70%];
+}
+
+.chat-message-ai {
+  @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 self-start;
+}
+
+.chat-message-user {
+  @apply bg-blue-500 dark:bg-blue-700 text-white self-end;
+}
+
+.chat-input-field {
+  @apply flex-grow p-2 rounded-l-lg border-t border-b border-l border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none;
+}
+
+.chat-send-button {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-r-lg;
+}
+
+.chat-suggestions-container {
+  @apply flex flex-wrap gap-2 mt-2;
+}
+
+.chat-suggestion-chip {
+  @apply bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm px-3 py-1 rounded-full cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors;
+}
+
+/* Layout and Positioning */
+.sr-only {
+  @apply sr-only;
+}
+
+.hidden {
+  @apply hidden;
+}
+
+

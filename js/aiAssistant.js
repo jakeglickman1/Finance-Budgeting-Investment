@@ -27,7 +27,7 @@ class AIAssistant {
       this.config.apiKey = window.FINANCEPRO_API_KEY;
     } else {
       // Try loading from local storage
-      this.config.apiKey = localStorage.getItem('gemini-api-key');
+      this.config.apiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
     }
 
     this.init();
@@ -70,7 +70,7 @@ class AIAssistant {
    * Load saved API key from localStorage
    */
   loadApiKey() {
-    const savedApiKey = localStorage.getItem('gemini-api-key');
+    const savedApiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY);
     if (savedApiKey) {
       this.config.apiKey = savedApiKey;
       if (this.elements.apiKeyInput) {
@@ -152,13 +152,13 @@ class AIAssistant {
     const apiKey = this.elements.apiKeyInput.value.trim();
     if (apiKey) {
       this.config.apiKey = apiKey;
-      localStorage.setItem('gemini-api-key', apiKey);
+      localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, apiKey);
 
       if (this.elements.apiKeySetup) {
         this.elements.apiKeySetup.style.display = 'none';
       }
 
-      this.updateStatus('Ready');
+      this.updateStatus(AI_RESPONSES.STATUS_READY);
       this.showNotification(AI_RESPONSES.API_KEY_SAVED, 'success');
       this.updateSendButton();
     }
@@ -189,7 +189,7 @@ class AIAssistant {
     } catch (error) {
       console.error('AI Assistant Error:', error);
       this.hideTypingIndicator();
-      this.addMessage(AI_RESPONSES.GENERIC_ERROR, 'ai');
+      this.addMessage(AI_RESPONSES.GENERIC_ERROR + " " + getRandomItem(AI_RESPONSES.GENERAL_ADVICE), 'ai');
     }
   }
 

@@ -4,7 +4,7 @@
   <!-- Basic HTML5 document structure -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Income & Budget Planner</title>
+  <title>Finance & Budgeting Dashboard</title>
   
   <!-- Enhanced font preloading for better performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,9 @@
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom utility styles -->
+  <link rel="stylesheet" href="./css/utilities.css">
 
   <!-- Chart.js for data visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -288,21 +291,21 @@
     <!-- Tab Navigation - Switch between Income Calculator and Budget Planner -->
     <div class="mb-8">
       <div class="flex flex-wrap gap-2 border-b border-border pb-4">
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground" data-tab="dashboard">
+        <button class="tab-btn tab-btn-base tab-btn-active" data-tab="dashboard">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
             <path d="M9 9h6v6H9z"/>
           </svg>
           Dashboard
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="income">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="income">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <line x1="12" y1="1" x2="12" y2="23"/>
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
           </svg>
           Income
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="budget">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="budget">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M9 12l2 2 4-4"/>
             <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
@@ -311,34 +314,34 @@
           </svg>
           Budget
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="debt">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="debt">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
             <line x1="1" y1="10" x2="23" y2="10"/>
           </svg>
           Debt Payoff
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="emergency">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="emergency">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
           Emergency Fund
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="goals">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="goals">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10"/>
             <path d="M12 6v6l4 2"/>
           </svg>
           Goals
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="investment">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="investment">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M3 3v18h18"/>
             <path d="M19 9l-5 5-4-4-3 3"/>
           </svg>
           Investments
         </button>
-        <button class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground" data-tab="ai-assistant">
+        <button class="tab-btn tab-btn-base tab-btn-inactive" data-tab="ai-assistant">
           <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
@@ -381,7 +384,7 @@
         </div>
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3" id="dashboard-metrics">
           <!-- Monthly Income Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Monthly Income</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-slate-700 text-slate-300">
@@ -398,7 +401,7 @@
           </div>
 
           <!-- Monthly Expenses Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Monthly Expenses</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-red-900/30 text-red-400">
@@ -414,7 +417,7 @@
           </div>
 
           <!-- Savings Rate Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Savings Rate</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-blue-900/30 text-blue-400">
@@ -431,7 +434,7 @@
           </div>
 
           <!-- Emergency Fund Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Emergency Fund</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-amber-900/30 text-amber-400">
@@ -447,7 +450,7 @@
           </div>
 
           <!-- Total Debt Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Total Debt</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-orange-900/30 text-orange-400">
@@ -464,7 +467,7 @@
           </div>
 
           <!-- Investments Card -->
-          <div class="metric-card rounded-lg border border-border bg-card p-6 text-card-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:border-slate-600">
+          <div class="card-base">
             <div class="flex flex-row items-center justify-between space-y-0 pb-2">
               <h3 class="text-sm font-medium text-card-foreground">Investments</h3>
               <div class="flex h-8 w-8 items-center justify-center rounded-md bg-purple-900/30 text-purple-400">
@@ -598,11 +601,11 @@
 
     <!-- Income Calculator Tab -->
     <section class="tab-content" id="income-tab" aria-labelledby="calc-title">
-      <div class="card">
+      <div class="card-base">
         <div class="flex flex-col lg:flex-row gap-6">
           <!-- Enhanced Calculator Form -->
           <div class="flex-1">
-            <h2 id="calc-title" class="text-xl font-semibold mb-4">Advanced Income Calculator</h2>
+            <h2 id="calc-title" class="text-heading">Advanced Income Calculator</h2>
 
             <form id="income-form" class="space-y-4">
               <!-- Primary Income Section -->
@@ -758,8 +761,8 @@
 
     <!-- Budget Planner Tab -->
     <section class="tab-content" id="budget-tab" aria-labelledby="budget-title">
-      <div class="card">
-        <h2 id="budget-title">Personal Budget Planner</h2>
+      <div class="card-base">
+        <h2 id="budget-title" class="text-heading">Personal Budget Planner</h2>
         <p>Input your monthly expenses to get personalized savings and investment recommendations.</p>
 
         <div class="budget-overview" id="budget-overview">
@@ -964,8 +967,8 @@
 
     <!-- Safe Investments Tab -->
     <section class="tab-content" id="investment-tab" aria-labelledby="investment-title">
-      <div class="card">
-        <h2 id="investment-title">Safe Investment Recommendations</h2>
+      <div class="card-base">
+        <h2 id="investment-title" class="text-heading">Safe Investment Recommendations</h2>
         <p>Get data-driven recommendations for safe, dividend-paying stocks and ETFs based on your budget.</p>
         <div class="api-notice">
           <p><strong>Note:</strong> For real-time stock prices, get a free API key from <a href="https://www.alphavantage.co/support/#api-key" target="_blank">Alpha Vantage</a> and update the script.js file.</p>
@@ -1062,8 +1065,8 @@
 
     <!-- Debt Payoff Calculator Tab -->
     <section class="tab-content" id="debt-tab" aria-labelledby="debt-title">
-      <div class="card">
-        <h2 id="debt-title">Debt Payoff Calculator</h2>
+      <div class="card-base">
+        <h2 id="debt-title" class="text-heading">Debt Payoff Calculator</h2>
         <p>Compare debt payoff strategies and see how quickly you can become debt-free.</p>
 
         <!-- Debt Input Section -->
@@ -1106,8 +1109,8 @@
 
     <!-- Emergency Fund Calculator Tab -->
     <section class="tab-content" id="emergency-tab" aria-labelledby="emergency-title">
-      <div class="card">
-        <h2 id="emergency-title">Emergency Fund Calculator</h2>
+      <div class="card-base">
+        <h2 id="emergency-title" class="text-heading">Emergency Fund Calculator</h2>
         <p>Build your financial safety net with a personalized emergency fund target.</p>
 
         <!-- Emergency Fund Form -->
@@ -1161,12 +1164,12 @@
 
     <!-- AI Financial Assistant Tab -->
     <section class="tab-content" id="ai-assistant-tab" aria-labelledby="ai-title">
-      <div class="card">
+      <div class="card-base">
         <div class="flex flex-col h-[600px]">
           <!-- AI Assistant Header -->
           <div class="flex items-center justify-between border-b border-border pb-4 mb-4">
             <div>
-              <h2 id="ai-title" class="text-xl font-semibold">AI Financial Assistant</h2>
+              <h2 id="ai-title" class="text-heading">AI Financial Assistant</h2>
               <p class="text-sm text-muted-foreground">Ask me anything about personal finance, investments, budgeting, and more</p>
             </div>
             <div class="flex items-center gap-2">
@@ -1273,8 +1276,8 @@
 
     <!-- Goals Tracker Tab -->
     <section class="tab-content" id="goals-tab" aria-labelledby="goals-title">
-      <div class="card">
-        <h2 id="goals-title">Financial Goals Tracker</h2>
+      <div class="card-base">
+        <h2 id="goals-title" class="text-heading">Financial Goals Tracker</h2>
         <p>Set and track your financial goals with personalized timelines and progress visualization.</p>
 
         <!-- Add Goal Section -->
@@ -1328,90 +1331,6 @@
         </div>
       </div>
     </section>
-
-    <!-- AI Assistant Tab -->
-    <section class="tab-content" id="ai-assistant-tab" aria-labelledby="ai-title">
-      <div class="card">
-        <div class="flex justify-between items-center mb-6">
-          <div>
-            <h2 id="ai-title">AI Financial Assistant</h2>
-            <p class="text-muted-foreground">Get personalized financial advice and answers to your money questions. Ask about budgeting, investing, debt management, or any financial topic!</p>
-          </div>
-          <button id="clear-chat-btn" class="btn-secondary text-sm px-3 py-2">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-            Clear Chat
-          </button>
-        </div>
-        
-        <!-- Chat Interface -->
-        <div class="ai-chat-container">
-          <div id="chat-messages" class="chat-messages">
-            <div class="ai-message">
-              <div class="message-avatar">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <div class="message-content">
-                <div class="message-header">
-                  <span class="message-sender">AI Assistant</span>
-                  <span class="message-time">Just now</span>
-                </div>
-                <div class="message-text">
-                  Hello! I'm your AI financial assistant. I can help you with:
-                  <ul class="mt-2 space-y-1 text-sm">
-                    <li>• Budget planning and optimization</li>
-                    <li>• Investment strategies and recommendations</li>
-                    <li>• Debt payoff strategies</li>
-                    <li>• Emergency fund planning</li>
-                    <li>• Financial goal setting</li>
-                    <li>• Tax planning basics</li>
-                  </ul>
-                  What would you like to know about your finances?
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Chat Input -->
-          <div class="chat-input-container">
-            <form id="ai-chat-form" class="chat-input-form">
-              <div class="input-group">
-                <input 
-                  type="text" 
-                  id="ai-message-input" 
-                  placeholder="Ask me anything about your finances..." 
-                  class="chat-input"
-                  autocomplete="off"
-                  required
-                >
-                <button type="submit" class="send-button" disabled>
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                  </svg>
-                </button>
-              </div>
-            </form>
-            <div class="chat-suggestions">
-              <button class="suggestion-chip" data-suggestion="How should I budget my monthly income?">
-                Budget planning
-              </button>
-              <button class="suggestion-chip" data-suggestion="What's the best way to start investing?">
-                Investment advice
-              </button>
-              <button class="suggestion-chip" data-suggestion="How much should I save for emergencies?">
-                Emergency fund
-              </button>
-              <button class="suggestion-chip" data-suggestion="What's the fastest way to pay off debt?">
-                Debt payoff
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- Site Footer -->
@@ -1422,6 +1341,8 @@
   </footer>
 
   <!-- Modular JavaScript Files -->
+  <script type="module" src="./js/constants.js" defer></script>
+  <script type="module" src="./js/utils.js" defer></script>
   <script src="./js/validation.js" defer></script>
   <script src="./js/performance.js" defer></script>
   <script src="./js/calculators.js" defer></script>

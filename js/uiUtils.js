@@ -3,6 +3,9 @@
  * Handles DOM manipulation, form handling, and UI interactions
  */
 
+import { STORAGE_KEYS } from './constants.js';
+import { sanitizeNumber, formatCurrency } from './utils.js';
+
 class UIUtils {
   constructor() {
     this.activeTab = 'dashboard';
@@ -73,11 +76,7 @@ class UIUtils {
     // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       const isActive = btn.getAttribute('data-tab') === tabName;
-      btn.className = `tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${
-        isActive
-          ? 'bg-primary text-primary-foreground'
-          : 'hover:bg-accent hover:text-accent-foreground text-muted-foreground'
-      }`;
+      btn.className = `tab-btn-base ${isActive ? 'tab-btn-active' : 'tab-btn-inactive'}`;
     });
 
     // Show/hide tab content
@@ -97,7 +96,7 @@ class UIUtils {
    * Initialize theme
    */
   initializeTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'dark';
     this.theme = savedTheme;
     document.documentElement.classList.toggle('dark', savedTheme === 'dark');
   }
@@ -108,7 +107,7 @@ class UIUtils {
   toggleTheme() {
     this.theme = this.theme === 'dark' ? 'light' : 'dark';
     document.documentElement.classList.toggle('dark', this.theme === 'dark');
-    localStorage.setItem('theme', this.theme);
+    localStorage.setItem(STORAGE_KEYS.THEME, this.theme);
   }
 
   /**
@@ -127,11 +126,11 @@ class UIUtils {
     event.preventDefault();
 
     const formData = new FormData(event.target);
-    const payAmount = window.sanitizeNumber(formData.get('payAmount'));
+    const payAmount = sanitizeNumber(formData.get('payAmount'));
     const frequency = formData.get('payFrequency');
-    const hoursPerDay = window.sanitizeNumber(formData.get('hoursPerDay'));
-    const daysPerWeek = window.sanitizeNumber(formData.get('daysPerWeek'));
-    const weeksPerYear = window.sanitizeNumber(formData.get('weeksPerYear'));
+    const hoursPerDay = sanitizeNumber(formData.get('hoursPerDay'));
+    const daysPerWeek = sanitizeNumber(formData.get('daysPerWeek'));
+    const weeksPerYear = sanitizeNumber(formData.get('weeksPerYear'));
     const zipcode = formData.get('zipcode')?.trim();
 
     // Validate input
@@ -146,8 +145,8 @@ class UIUtils {
     }
 
     // Calculate and save
-    const annualIncome = window.calculateAnnualIncome(payAmount, frequency, hoursPerDay, daysPerWeek, weeksPerYear);
-    const taxData = window.calculateAllTaxes(annualIncome, zipcode);
+    const annualIncome = window.dataManager.calculateAnnualIncome(payAmount, frequency, hoursPerDay, daysPerWeek, weeksPerYear);
+    const taxData = window.dataManager.calculateAllTaxes(annualIncome, zipcode);
 
     // Update data store
     window.dataManager.updateSection('income', {
@@ -173,7 +172,7 @@ class UIUtils {
     event.preventDefault();
 
     const formData = new FormData(event.target);
-    const monthlyIncome = window.sanitizeNumber(formData.get('monthlyIncome'));
+    const monthlyIncome = sanitizeNumber(formData.get('monthlyIncome'));
 
     if (monthlyIncome <= 0) {
       this.showError('Please enter a valid monthly income.');
@@ -186,10 +185,10 @@ class UIUtils {
                           'subscriptions', 'miscellaneous'];
 
     expenseFields.forEach(field => {
-      expenses[field] = window.sanitizeNumber(formData.get(field));
+      expenses[field] = sanitizeNumber(formData.get(field));
     });
 
-    const analysis = window.calculateBudgetAnalysis(monthlyIncome, expenses);
+    const analysis = window.dataManager.calculateBudgetAnalysis(monthlyIncome, expenses);
 
     // Update data store
     window.dataManager.updateSection('budget', {
@@ -220,19 +219,19 @@ class UIUtils {
         <div class="income-breakdown">
           <div class="income-row">
             <span>Annual Gross:</span>
-            <strong>${window.toCurrency(annualIncome)}</strong>
+            <strong>${formatCurrency(annualIncome)}</strong>
           </div>
           <div class="income-row">
             <span>Annual Net:</span>
-            <strong>${window.toCurrency(taxData.netIncome)}</strong>
+            <strong>${formatCurrency(taxData.netIncome)}</strong>
           </div>
           <div class="income-row">
             <span>Monthly Net:</span>
-            <strong>${window.toCurrency(monthlyNet)}</strong>
+            <strong>${formatCurrency(monthlyNet)}</strong>
           </div>
           <div class="income-row">
             <span>Weekly Net:</span>
-            <strong>${window.toCurrency(weeklyNet)}</strong>
+            <strong>${formatCurrency(weeklyNet)}</strong>
           </div>
         </div>
 
@@ -240,23 +239,23 @@ class UIUtils {
         <div class="tax-breakdown">
           <div class="tax-row">
             <span>Federal Tax:</span>
-            <span>${window.toCurrency(taxData.federalTax)}</span>
+            <span>${formatCurrency(taxData.federalTax)}</span>
           </div>
           <div class="tax-row">
             <span>Social Security:</span>
-            <span>${window.toCurrency(taxData.socialSecurityTax)}</span>
+            <span>${formatCurrency(taxData.socialSecurityTax)}</span>
           </div>
           <div class="tax-row">
             <span>Medicare:</span>
-            <span>${window.toCurrency(taxData.medicareTax)}</span>
+            <span>${formatCurrency(taxData.medicareTax)}</span>
           </div>
           <div class="tax-row">
             <span>State Tax:</span>
-            <span>${window.toCurrency(taxData.stateTax)}</span>
+            <span>${formatCurrency(taxData.stateTax)}</span>
           </div>
           <div class="tax-row total-row">
             <span><strong>Total Tax:</strong></span>
-            <span><strong>${window.toCurrency(taxData.totalTax)}</strong></span>
+            <span><strong>${formatCurrency(taxData.totalTax)}</strong></span>
           </div>
           <div class="tax-row">
             <span>Effective Rate:</span>
@@ -287,11 +286,11 @@ class UIUtils {
           </div>
           <div class="summary-row">
             <span>Remaining Income:</span>
-            <strong>${window.toCurrency(analysis.remainingIncome)}</strong>
+            <strong>${formatCurrency(analysis.remainingIncome)}</strong>
           </div>
           <div class="summary-row">
             <span>Total Expenses:</span>
-            <strong>${window.toCurrency(analysis.totalExpenses)}</strong>
+            <strong>${formatCurrency(analysis.totalExpenses)}</strong>
           </div>
         </div>
 
@@ -300,7 +299,7 @@ class UIUtils {
           ${analysis.categories.map(cat => `
             <div class="expense-row">
               <span>${this.formatCategoryName(cat.category)}:</span>
-              <span>${window.toCurrency(cat.amount)} (${cat.percentage.toFixed(1)}%)</span>
+              <span>${formatCurrency(cat.amount)} (${cat.percentage.toFixed(1)}%)</span>
             </div>
           `).join('')}
         </div>
